@@ -21,6 +21,9 @@ public class App
 
     public void Run()
     {
+        Theme.ApplyPaper();
+        UiAnimation.Intro();
+
         if (_warning is not null)
         {
             Theme.Banner();
@@ -123,12 +126,14 @@ public class App
     {
         var name = Input.Ask("Название проекта", 60);
         var description = Input.AskOptional("Короткое описание (Enter — пропустить)", 200);
+        UiAnimation.Loading("Создаём проект", 350);
         var project = _svc.CreateProject(name, description);
         Theme.Ok($"Проект «{project.Name}» создан!");
     }
 
     private void AddDemo()
     {
+        UiAnimation.Loading("Подготавливаем демо-проект", 350);
         _svc.AddDemoProject();
         Theme.Ok("Демо-проект добавлен — загляни внутрь, там уже есть команда и задачи!");
     }
@@ -148,21 +153,12 @@ public class App
             return;
         }
 
+        UiAnimation.Loading("Удаляем проект", 250);
         _svc.DeleteProject(picked);
         Theme.Ok("Проект удалён.");
     }
 
-    private void Goodbye()
-    {
-        AnsiConsole.Clear();
-        AnsiConsole.Write(new Panel(new Markup(
-            $"[bold {Theme.Pink}]До встречи! (◕‿◕✿)[/]\n[grey]Все данные сохранены:\n{Theme.E(_svc.StoragePath)}[/]"))
-        {
-            Border = BoxBorder.Rounded,
-            BorderStyle = new Style(Theme.PinkC),
-            Padding = new Padding(2, 0)
-        });
-    }
+    private void Goodbye() => Theme.Goodbye(_svc.StoragePath);
 
     // ------------------------------------------------------------ меню проекта
 
@@ -214,6 +210,7 @@ public class App
 
         var deadline = Input.AskDate("Срок выполнения");
 
+        UiAnimation.Loading("Добавляем задачу", 300);
         var task = _svc.AddTask(p, title, description, priority, kind, assignee?.Id, deadline);
         Theme.Ok($"Задача #{task.Id} «{task.Title}» добавлена!");
     }
@@ -271,7 +268,7 @@ public class App
 
         Theme.Ok($"Задача #{task.Id} теперь «{state.Text()}»");
         if (gained > 0)
-            AnsiConsole.MarkupLine($"[{Theme.Lemon}]◇ +{gained} конфеток! Моти в восторге ヽ(>∀<☆)ノ[/]");
+            UiAnimation.Reward(gained);
         else if (gained < 0)
             Theme.Hint("Конфетки вернулись обратно в баночку… но ты ещё заработаешь их ♡");
     }
@@ -351,8 +348,8 @@ public class App
     {
         SortKey.Priority => "◆ По приоритету (сначала важные)",
         SortKey.Deadline => "▦ По сроку (сначала ближайшие)",
-        SortKey.State => "🍓 По статусу",
-        SortKey.Title => "🔤 По названию (А–Я)",
+        SortKey.State => "◇ По статусу",
+        SortKey.Title => "А–Я По названию",
         SortKey.Time => "◷ По затраченному времени",
         _ => key.ToString()
     };
@@ -422,6 +419,7 @@ public class App
         if (role == roles[^1])
             role = Input.Ask("Какая роль?", 30);
 
+        UiAnimation.Loading("Добавляем участника", 250);
         var member = _svc.AddMember(p, name, role);
         Theme.Ok($"{member.Name} ({member.Role}) теперь в команде!");
     }
@@ -473,6 +471,7 @@ public class App
             return;
         }
 
+        UiAnimation.Loading("Удаляем задачу", 250);
         _svc.DeleteTask(p, task);
         Theme.Ok("Задача удалена.");
     }

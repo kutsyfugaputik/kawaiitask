@@ -6,12 +6,15 @@ namespace KawaiiTasks.UI;
 /// <summary>Безопасный ввод: каждое значение проверяется до того, как попадёт в программу.</summary>
 public static class Input
 {
-    private static string Prompt(string text) => $"[{Theme.Pink}]{Theme.E(text)}[/]";
+    private static string Prompt(string text) => $"[{Theme.Cocoa}]┊[/] [{Theme.Pink}]✎ {Theme.E(text)}[/]";
+
+    private static readonly Style Typed = new(Theme.LavenderC);
 
     /// <summary>Обязательная строка до max символов.</summary>
     public static string Ask(string text, int max = 80)
     {
         var prompt = new TextPrompt<string>(Prompt(text))
+            .PromptStyle(Typed)
             .Validate(s =>
             {
                 if (string.IsNullOrWhiteSpace(s))
@@ -27,6 +30,7 @@ public static class Input
     public static string AskOptional(string text, int max = 500)
     {
         var prompt = new TextPrompt<string>(Prompt(text))
+            .PromptStyle(Typed)
             .AllowEmpty()
             .Validate(s => (s ?? "").Trim().Length > max
                 ? ValidationResult.Error($"[{Theme.Berry}]Максимум {max} символов[/]")
@@ -42,6 +46,7 @@ public static class Input
     public static DateTime? AskDate(string text)
     {
         var prompt = new TextPrompt<string>(Prompt($"{text} (дд.мм.гггг, Enter — без срока)"))
+            .PromptStyle(Typed)
             .AllowEmpty()
             .Validate(s =>
             {
@@ -88,6 +93,7 @@ public static class Input
     public static int AskDuration(string text)
     {
         var prompt = new TextPrompt<string>(Prompt(text))
+            .PromptStyle(Typed)
             .Validate(s => TryParseDuration(s, out _)
                 ? ValidationResult.Success()
                 : ValidationResult.Error($"[{Theme.Berry}]Введи часы: 1.5 или 1:30 (от 1 минуты до 24 часов)[/]"));
@@ -100,10 +106,10 @@ public static class Input
     public static T Pick<T>(string title, IEnumerable<T> items, Func<T, string> label) where T : notnull
     {
         var prompt = new SelectionPrompt<T>()
-            .Title($"[{Theme.Lavender}]{Theme.E(title)}[/]")
+            .Title($"[{Theme.Cocoa}]╭─[/] [{Theme.Lavender}]✿ {Theme.E(title)} ✿[/]\n[{Theme.Cocoa}]╰┈[/]")
             .PageSize(12)
-            .MoreChoicesText("[grey](листай вверх/вниз ↑↓)[/]")
-            .HighlightStyle(new Style(Theme.PinkC))
+            .MoreChoicesText("[grey](↑/↓ — листать страничку · Enter — выбрать)[/]")
+            .HighlightStyle(new Style(Theme.PinkC, decoration: Decoration.Bold))
             .UseConverter(x => Theme.E(label(x)))
             .AddChoices(items);
         return AnsiConsole.Prompt(prompt);
@@ -119,5 +125,5 @@ public static class Input
         return Pick(title, choices, c => c.Label).Value;
     }
 
-    public static bool Confirm(string text) => AnsiConsole.Confirm($"[{Theme.Pink}]{Theme.E(text)}[/] [grey](y/n)[/]", false);
+    public static bool Confirm(string text) => AnsiConsole.Confirm($"[{Theme.Cocoa}]┊[/] [{Theme.Pink}]✧ {Theme.E(text)}[/] [grey](y/n)[/]", false);
 }
