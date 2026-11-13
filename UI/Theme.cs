@@ -50,11 +50,31 @@ public static class Theme
     public static string StateTag(TaskState s) => $"[{StateHex(s)}]{E(s.Text())}[/]";
     public static string PriorityDot(Priority p) => $"[{PriorityHex(p)}]●[/]";
 
+    /// <summary>Задаёт тёмный фон терминала для контрастной пастельной палитры.</summary>
+    public static void InitializeConsole()
+    {
+        try
+        {
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Clear();
+        }
+        catch (IOException)
+        {
+            // В некоторых встроенных терминалах смена фона недоступна.
+        }
+    }
+
     public static void Banner()
     {
         AnsiConsole.Clear();
-        AnsiConsole.Write(new FigletText("Kawaii").Centered().Color(PinkC));
-        AnsiConsole.Write(new Rule($"[{Lavender}]✿ ✿ менеджер задач для IT-проектов ✿ ✿[/]").RuleStyle(new Style(LavenderC)));
+        AnsiConsole.Write(new FigletText("KawaiiTasks").Centered().Color(PinkC));
+        AnsiConsole.Write(new Rule(
+            $"[{Lavender}]✿  М Е Н Е Д Ж Е Р   I T - П Р О Е К Т О В  ✿[/]")
+            .RuleStyle(new Style(LavenderC)));
+        AnsiConsole.Write(new Align(
+            new Markup("[grey]~ уютное пространство для больших планов и маленьких шагов ~[/]"),
+            HorizontalAlignment.Center));
         AnsiConsole.WriteLine();
     }
 
@@ -62,12 +82,12 @@ public static class Theme
 
     public static void Fail(string message) => AnsiConsole.MarkupLine($"[{Berry}](；ω；) {E(message)}[/]");
 
-    public static void Hint(string message) => AnsiConsole.MarkupLine($"[grey]{E(message)}[/]");
+    public static void Hint(string message) => AnsiConsole.MarkupLine($"[{Lavender}]「 {E(message)} 」[/]");
 
     public static void Pause()
     {
         AnsiConsole.WriteLine();
-        AnsiConsole.Markup("[grey]нажми любую клавишу, чтобы вернуться ♡[/]");
+        AnsiConsole.Markup("[grey]нажми любую клавишу, чтобы вернуться ୨୧[/]");
         try { Console.ReadKey(true); }
         catch (InvalidOperationException) { Console.ReadLine(); }
         AnsiConsole.WriteLine();

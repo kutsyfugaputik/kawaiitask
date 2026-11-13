@@ -13,7 +13,7 @@ public class ConsoleReportWriter : IReportWriter
     {
         var project = r.Project;
 
-        AnsiConsole.Write(new Rule($"[{Theme.Pink}]🎀 Отчёт о проекте: {Theme.E(project.Name)}[/]")
+        AnsiConsole.Write(new Rule($"[{Theme.Pink}]୨୧ Отчёт о проекте: {Theme.E(project.Name)}[/]")
             .RuleStyle(new Style(Theme.LavenderC)));
         AnsiConsole.WriteLine();
 
@@ -30,7 +30,7 @@ public class ConsoleReportWriter : IReportWriter
         Row("Просрочено", r.Overdue.Count > 0 ? $"[{Theme.Berry}]{r.Overdue.Count}[/]" : "0");
         Row("Без исполнителя", $"{r.Unassigned}");
         Row("Затрачено времени", Views.Fmt(r.TotalMinutes));
-        Row("Конфетки", $"🍬 {r.CandyPoints} · уровень {level}: {Theme.E(levelName)}");
+        Row("Конфетки", $"◇ {r.CandyPoints} · уровень {level}: {Theme.E(levelName)}");
         Row("Сформирован", r.GeneratedAt.ToString("dd.MM.yyyy HH:mm"));
 
         AnsiConsole.Write(new Panel(grid)
@@ -71,7 +71,7 @@ public class ConsoleReportWriter : IReportWriter
                 table.AddRow(Theme.E(m.Name), Theme.E(m.Role), $"{m.Assigned}", $"{m.Done}", Views.Fmt(m.Minutes));
             AnsiConsole.Write(new Panel(table)
             {
-                Header = new PanelHeader($"[{Theme.Pink}]👥 Команда[/]"),
+                Header = new PanelHeader($"[{Theme.Pink}]♧ Команда[/]"),
                 Border = BoxBorder.Rounded,
                 BorderStyle = new Style(Theme.LavenderC)
             });
@@ -79,7 +79,7 @@ public class ConsoleReportWriter : IReportWriter
 
         if (r.Overdue.Count > 0)
         {
-            AnsiConsole.MarkupLine($"[{Theme.Berry}]❗ Просроченные задачи:[/]");
+            AnsiConsole.MarkupLine($"[{Theme.Berry}]! Просроченные задачи:[/]");
             foreach (var t in r.Overdue)
                 AnsiConsole.MarkupLine($"  • #{t.Id} {Theme.E(t.Title)} — срок {Views.Date(t.Deadline)}, {Theme.E(project.AssigneeName(t))}");
             AnsiConsole.WriteLine();
@@ -87,7 +87,7 @@ public class ConsoleReportWriter : IReportWriter
 
         if (r.TopByTime.Count > 0)
         {
-            AnsiConsole.MarkupLine($"[{Theme.Lavender}]⏰ Больше всего времени ушло на:[/]");
+            AnsiConsole.MarkupLine($"[{Theme.Lavender}]◷ Больше всего времени ушло на:[/]");
             foreach (var t in r.TopByTime)
                 AnsiConsole.MarkupLine($"  • #{t.Id} {Theme.E(t.Title)} — {Views.Fmt(t.SpentMinutes)}");
         }

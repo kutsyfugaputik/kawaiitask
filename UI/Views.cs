@@ -27,14 +27,14 @@ public static class Views
         var bar = $"[{Theme.Mint}]{new string('█', filled)}[/][grey]{new string('░', 20 - filled)}[/] {report.Percent:0}%";
 
         var overdue = report.Overdue.Count > 0
-            ? $"   [{Theme.Berry}]❗ просрочено: {report.Overdue.Count}[/]"
+            ? $"   [{Theme.Berry}]! просрочено: {report.Overdue.Count}[/]"
             : "";
 
         var text = new Markup(
             $"[bold {Theme.Pink}]{Theme.E(project.Name)}[/]\n" +
             $"[grey]{Theme.E(project.Description)}[/]\n" +
             $"{bar}\n" +
-            $"🍬 {report.CandyPoints} конфеток · уровень {level}: {Theme.E(levelName)}   ⏰ {Fmt(report.TotalMinutes)}{overdue}");
+            $"◇ {report.CandyPoints} конфеток · уровень {level}: {Theme.E(levelName)}   ◷ {Fmt(report.TotalMinutes)}{overdue}");
 
         var grid = new Grid();
         grid.AddColumn(new GridColumn { NoWrap = true });
@@ -47,7 +47,7 @@ public static class Views
             BorderStyle = new Style(Theme.PinkC),
             Padding = new Padding(2, 0)
         });
-        AnsiConsole.MarkupLine($"  [{Theme.Lavender}]💬 {Theme.E(Mascot.Phrase(mood))}[/]");
+        AnsiConsole.MarkupLine($"  [{Theme.Lavender}]「 」 {Theme.E(Mascot.Phrase(mood))}[/]");
         AnsiConsole.WriteLine();
     }
 
@@ -72,8 +72,8 @@ public static class Views
 
             foreach (var t in items)
             {
-                var warn = t.IsOverdue ? $"[{Theme.Berry}]❗[/]" : "";
-                var due = t.Deadline.HasValue ? $" · 📅 {Date(t.Deadline)}" : "";
+                var warn = t.IsOverdue ? $"[{Theme.Berry}]![/]" : "";
+                var due = t.Deadline.HasValue ? $" · ▦ {Date(t.Deadline)}" : "";
                 lines.Add(new Markup($"{Theme.PriorityDot(t.Priority)} {warn}[bold]#{t.Id}[/] {Theme.E(Short(t.Title, 24))}"));
                 lines.Add(new Markup($"[grey]  {Theme.E(project.AssigneeName(t))}{due}[/]"));
                 lines.Add(new Markup(" "));
@@ -113,7 +113,7 @@ public static class Views
 
         foreach (var t in list)
         {
-            var due = t.IsOverdue ? $"[{Theme.Berry}]❗ {Date(t.Deadline)}[/]" : Date(t.Deadline);
+            var due = t.IsOverdue ? $"[{Theme.Berry}]! {Date(t.Deadline)}[/]" : Date(t.Deadline);
             table.AddRow(
                 $"#{t.Id}",
                 Theme.E(Short(t.Title, 40)),
@@ -137,7 +137,7 @@ public static class Views
         void Row(string key, string value) =>
             grid.AddRow(new Markup($"[{Theme.Lavender}]{key}[/]   "), new Markup(value));
 
-        var due = task.IsOverdue ? $"[{Theme.Berry}]❗ {Date(task.Deadline)} (просрочена)[/]" : Date(task.Deadline);
+        var due = task.IsOverdue ? $"[{Theme.Berry}]! {Date(task.Deadline)} (просрочена)[/]" : Date(task.Deadline);
 
         Row("Задача", $"[bold]#{task.Id} {Theme.E(task.Title)}[/]");
         Row("Описание", string.IsNullOrWhiteSpace(task.Description) ? "[grey]—[/]" : Theme.E(task.Description));
@@ -150,7 +150,7 @@ public static class Views
 
         AnsiConsole.Write(new Panel(grid)
         {
-            Header = new PanelHeader($"[{Theme.Pink}]🎀 Карточка задачи[/]"),
+            Header = new PanelHeader($"[{Theme.Pink}]୨୧ Карточка задачи[/]"),
             Border = BoxBorder.Rounded,
             BorderStyle = new Style(Theme.PinkC),
             Padding = new Padding(2, 0)

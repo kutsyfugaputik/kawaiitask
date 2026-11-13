@@ -28,7 +28,7 @@ public static class FocusTimer
 
                 ctx.UpdateTarget(new Panel(content)
                 {
-                    Header = new PanelHeader($"[{Theme.Pink}]⏰ Фокус-таймер[/]"),
+                    Header = new PanelHeader($"[{Theme.Pink}]◷ Фокус-таймер[/]"),
                     Border = BoxBorder.Rounded,
                     BorderStyle = new Style(Theme.PinkC),
                     Padding = new Padding(2, 0)

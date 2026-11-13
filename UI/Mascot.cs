@@ -13,7 +13,7 @@ public static class Mascot
     private static readonly string[] Sleepy =
     {
         "Тут пока пусто… давай добавим первую задачку?",
-        "Я вздремну, пока ты придумываешь план ☁"
+        "Я вздремну, пока ты придумываешь план ☾"
     };
 
     private static readonly string[] Happy =
@@ -32,8 +32,8 @@ public static class Mascot
 
     private static readonly string[] Party =
     {
-        "УРА! Все задачи готовы! Время тортика 🍰",
-        "Проект завершён! Ты просто чудо ✨"
+        "УРА! Все задачи готовы! Время тортика ♡",
+        "Проект завершён! Ты просто чудо ✧"
     };
 
     public static string Face(Mood mood) => mood switch
@@ -67,20 +67,27 @@ public static class Mascot
     /// <summary>Приветствие на главном экране.</summary>
     public static IRenderable Greeting()
     {
+        var art = new Markup(
+            $"[{Theme.Pink}]  /\\_/\\\n ( o.o )\n  > ^ <[/]");
+
         var text = new Markup(
-            $"[bold {Theme.Pink}]Привет! Я Моти ♡[/]\n" +
-            "[grey]Помогу следить за задачами, дедлайнами и временем.\nВыбери проект или создай новый![/]");
+            $"[bold {Theme.Pink}]Привет! Я Нори-нори ୨୧[/]\n" +
+            "[grey]Твой маленький помощник в мире больших проектов.\n" +
+            "Следим за задачами, дедлайнами и временем вместе![/]\n" +
+            $"[{Theme.Lavender}]Сегодня всё получится. Начнём?[/]");
 
         var grid = new Grid();
         grid.AddColumn(new GridColumn { NoWrap = true });
         grid.AddColumn();
-        grid.AddRow(new Markup($"[{Theme.Pink}]{Theme.E(Face(Mood.Happy))}[/]   "), text);
+        grid.AddRow(art, text);
 
         return new Panel(grid)
         {
+            Header = new PanelHeader($"[{Theme.Lavender}]~ ДОБРО ПОЖАЛОВАТЬ ~[/]"),
             Border = BoxBorder.Rounded,
             BorderStyle = new Style(Theme.PinkC),
-            Padding = new Padding(2, 0)
+            Padding = new Padding(2, 1)
         };
     }
+
 }

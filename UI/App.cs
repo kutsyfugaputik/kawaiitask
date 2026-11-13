@@ -21,6 +21,8 @@ public class App
 
     public void Run()
     {
+        Theme.InitializeConsole();
+
         if (_warning is not null)
         {
             Theme.Banner();
@@ -73,7 +75,7 @@ public class App
             return null;
         }
 
-        var choices = new List<(TaskItem? Task, string Label)> { (null, "🔙 Отмена") };
+        var choices = new List<(TaskItem? Task, string Label)> { (null, "← Отмена") };
         foreach (var t in project.Tasks.OrderBy(t => t.Id))
             choices.Add((t, $"#{t.Id} {Views.Short(t.Title, 45)} — {t.State.Text()}"));
 
@@ -84,7 +86,7 @@ public class App
     {
         var choices = new List<(Member? Member, string Label)> { (null, noneLabel) };
         foreach (var m in project.Team)
-            choices.Add((m, $"👤 {m.Name} — {m.Role}"));
+            choices.Add((m, $"♙ {m.Name} — {m.Role}"));
 
         return Input.Pick("Кого выберем?", choices, c => c.Label).Member;
     }
@@ -104,14 +106,14 @@ public class App
             {
                 var p = project;
                 var done = p.Tasks.Count(t => t.IsDone);
-                items.Add(new MenuItem($"🌸 {p.Name}  ({done}/{p.Tasks.Count})", () => ProjectLoop(p), false));
+                items.Add(new MenuItem($"✿ {p.Name}  ({done}/{p.Tasks.Count})", () => ProjectLoop(p), false));
             }
 
-            items.Add(new MenuItem("✨ Создать проект", CreateProject));
-            items.Add(new MenuItem("🎀 Добавить демо-проект", AddDemo));
+            items.Add(new MenuItem("✧ Создать проект", CreateProject));
+            items.Add(new MenuItem("୨୧ Добавить демо-проект", AddDemo));
             if (_svc.Projects.Count > 0)
-                items.Add(new MenuItem("💔 Удалить проект", DeleteProject));
-            items.Add(new MenuItem("👋 Выйти", null));
+                items.Add(new MenuItem("× Удалить проект", DeleteProject));
+            items.Add(new MenuItem("(｡･ω･｡)ﾉ Выйти", null));
 
             var choice = Input.Pick("Что будем делать?", items, i => i.Label);
             if (choice.Run is null) return;
@@ -135,9 +137,9 @@ public class App
 
     private void DeleteProject()
     {
-        var choices = new List<(Project? Project, string Label)> { (null, "🔙 Отмена") };
+        var choices = new List<(Project? Project, string Label)> { (null, "← Отмена") };
         foreach (var p in _svc.Projects)
-            choices.Add((p, $"🌸 {p.Name}"));
+            choices.Add((p, $"✿ {p.Name}"));
 
         var picked = Input.Pick("Какой проект удалить?", choices, c => c.Label).Project;
         if (picked is null) return;
@@ -175,19 +177,19 @@ public class App
 
             var items = new List<MenuItem>
             {
-                new("📋 Доска задач", () => Views.Board(p, p.Tasks)),
-                new("📝 Все задачи (таблица)", () => ShowTable(p)),
-                new("➕ Добавить задачу", () => AddTask(p)),
-                new("🖍 Изменить задачу", () => EditTask(p)),
-                new("🔄 Сменить статус", () => ChangeState(p)),
-                new("👤 Назначить исполнителя", () => Assign(p)),
-                new("📅 Установить срок", () => SetDeadline(p)),
-                new("⏰ Учёт времени", () => TrackTime(p)),
-                new("🔍 Поиск и фильтры", () => SearchTasks(p)),
-                new("👥 Команда", () => TeamMenu(p), false),
-                new("📊 Отчёт о проекте", () => ShowReport(p)),
-                new("💔 Удалить задачу", () => DeleteTask(p)),
-                new("🔙 К списку проектов", null)
+                new("▤ Доска задач", () => Views.Board(p, p.Tasks)),
+                new("✎ Все задачи (таблица)", () => ShowTable(p)),
+                new("＋ Добавить задачу", () => AddTask(p)),
+                new("✐ Изменить задачу", () => EditTask(p)),
+                new("↻ Сменить статус", () => ChangeState(p)),
+                new("♙ Назначить исполнителя", () => Assign(p)),
+                new("▦ Установить срок", () => SetDeadline(p)),
+                new("◷ Учёт времени", () => TrackTime(p)),
+                new("⌕ Поиск и фильтры", () => SearchTasks(p)),
+                new("♧ Команда", () => TeamMenu(p), false),
+                new("▥ Отчёт о проекте", () => ShowReport(p)),
+                new("× Удалить задачу", () => DeleteTask(p)),
+                new("← К списку проектов", null)
             };
 
             var choice = Input.Pick($"Проект «{p.Name}» — что делаем?", items, i => i.Label);
@@ -210,7 +212,7 @@ public class App
 
         Member? assignee = null;
         if (p.Team.Count > 0)
-            assignee = PickMember(p, "🙈 Пока никому");
+            assignee = PickMember(p, "(×_×) Пока никому");
 
         var deadline = Input.AskDate("Срок выполнения");
 
@@ -223,7 +225,7 @@ public class App
         var task = PickTask(p, "Какую задачу правим?");
         if (task is null) return;
 
-        var fields = new[] { "📝 Название", "💬 Описание", "🔥 Приоритет", "✨ Тип" };
+        var fields = new[] { "✎ Название", "「 」 Описание", "◆ Приоритет", "✧ Тип" };
         var field = Input.Pick("Что поменяем?", fields, s => s);
 
         switch (Array.IndexOf(fields, field))
@@ -271,7 +273,7 @@ public class App
 
         Theme.Ok($"Задача #{task.Id} теперь «{state.Text()}»");
         if (gained > 0)
-            AnsiConsole.MarkupLine($"[{Theme.Lemon}]🍬 +{gained} конфеток! Моти в восторге ヽ(>∀<☆)ノ[/]");
+            AnsiConsole.MarkupLine($"[{Theme.Lemon}]◇ +{gained} конфеток! Моти в восторге ヽ(>∀<☆)ノ[/]");
         else if (gained < 0)
             Theme.Hint("Конфетки вернулись обратно в баночку… но ты ещё заработаешь их ♡");
     }
@@ -280,14 +282,14 @@ public class App
     {
         if (p.Team.Count == 0)
         {
-            Theme.Hint("В команде пока никого нет — добавь участников в разделе «Команда» 👥");
+            Theme.Hint("В команде пока никого нет — добавь участников в разделе «Команда» ♧");
             return;
         }
 
         var task = PickTask(p, "Кому назначаем задачу?");
         if (task is null) return;
 
-        var member = PickMember(p, "🙈 Снять исполнителя");
+        var member = PickMember(p, "(×_×) Снять исполнителя");
         _svc.Assign(p, task, member);
 
         Theme.Ok(member is null
@@ -317,7 +319,7 @@ public class App
         Views.TaskCard(p, task);
         AnsiConsole.WriteLine();
 
-        var options = new[] { "⏰ Запустить таймер", "✍ Добавить время вручную", "🔙 Назад" };
+        var options = new[] { "◷ Запустить таймер", "✎ Добавить время вручную", "← Назад" };
         var picked = Input.Pick("Что сделаем?", options, s => s);
 
         switch (Array.IndexOf(options, picked))
@@ -349,11 +351,11 @@ public class App
 
     private static string SortLabel(SortKey key) => key switch
     {
-        SortKey.Priority => "🔥 По приоритету (сначала важные)",
-        SortKey.Deadline => "📅 По сроку (сначала ближайшие)",
+        SortKey.Priority => "◆ По приоритету (сначала важные)",
+        SortKey.Deadline => "▦ По сроку (сначала ближайшие)",
         SortKey.State => "🍓 По статусу",
         SortKey.Title => "🔤 По названию (А–Я)",
-        SortKey.Time => "⏰ По затраченному времени",
+        SortKey.Time => "◷ По затраченному времени",
         _ => key.ToString()
     };
 
@@ -377,10 +379,10 @@ public class App
             .UseConverter(s => Theme.E(s.Text()))
             .AddChoices(Enum.GetValues<TaskState>()));
 
-        filter.OnlyPriority = Input.PickOrAny("Приоритет", Enum.GetValues<Priority>(), x => x.Text(), "✨ Любой");
+        filter.OnlyPriority = Input.PickOrAny("Приоритет", Enum.GetValues<Priority>(), x => x.Text(), "✧ Любой");
 
         if (p.Team.Count > 0)
-            filter.AssigneeId = PickMember(p, "✨ Любой исполнитель")?.Id;
+            filter.AssigneeId = PickMember(p, "✧ Любой исполнитель")?.Id;
 
         filter.OnlyOverdue = Input.Confirm("Показать только просроченные?");
         filter.Sort = Input.Pick("Как отсортировать?", Enum.GetValues<SortKey>(), SortLabel);
@@ -396,15 +398,15 @@ public class App
         while (true)
         {
             Theme.Banner();
-            AnsiConsole.MarkupLine($"[{Theme.Pink}]👥 Команда проекта «{Theme.E(p.Name)}»[/]");
+            AnsiConsole.MarkupLine($"[{Theme.Pink}]♧ Команда проекта «{Theme.E(p.Name)}»[/]");
             Views.TeamTable(p);
             AnsiConsole.WriteLine();
 
             var items = new List<MenuItem>
             {
-                new("➕ Добавить участника", () => AddMember(p)),
-                new("💔 Убрать участника", () => RemoveMember(p)),
-                new("🔙 Назад", null)
+                new("＋ Добавить участника", () => AddMember(p)),
+                new("× Убрать участника", () => RemoveMember(p)),
+                new("← Назад", null)
             };
 
             var choice = Input.Pick("Что делаем с командой?", items, i => i.Label);
@@ -417,7 +419,7 @@ public class App
     {
         var name = Input.Ask("Имя участника", 40);
 
-        var roles = new[] { "Разработчик", "Тестировщик", "Аналитик", "Дизайнер", "Тимлид", "✍ Другая роль" };
+        var roles = new[] { "Разработчик", "Тестировщик", "Аналитик", "Дизайнер", "Тимлид", "✎ Другая роль" };
         var role = Input.Pick("Роль в проекте", roles, s => s);
         if (role == roles[^1])
             role = Input.Ask("Какая роль?", 30);
@@ -434,7 +436,7 @@ public class App
             return;
         }
 
-        var member = PickMember(p, "🔙 Отмена");
+        var member = PickMember(p, "← Отмена");
         if (member is null) return;
 
         if (!Input.Confirm($"Убрать {member.Name} из команды? Его задачи останутся без исполнителя."))
