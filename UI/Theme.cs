@@ -53,7 +53,7 @@ public static class Theme
     public static void Banner()
     {
         AnsiConsole.Clear();
-        AnsiConsole.Write(new FigletText("KawaiiTasks").Centered().Color(PinkC));
+        AnsiConsole.Write(new FigletText("k a w a i i t a s k s").Centered().Color(PinkC));
         AnsiConsole.Write(new Rule(
             $"[{Lavender}]✿  М Е Н Е Д Ж Е Р   I T - П Р О Е К Т О В  ✿[/]")
             .RuleStyle(new Style(LavenderC)));
