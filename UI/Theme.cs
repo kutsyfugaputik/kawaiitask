@@ -50,21 +50,6 @@ public static class Theme
     public static string StateTag(TaskState s) => $"[{StateHex(s)}]{E(s.Text())}[/]";
     public static string PriorityDot(Priority p) => $"[{PriorityHex(p)}]●[/]";
 
-    /// <summary>Задаёт тёмный фон терминала для контрастной пастельной палитры.</summary>
-    public static void InitializeConsole()
-    {
-        try
-        {
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.Clear();
-        }
-        catch (IOException)
-        {
-            // В некоторых встроенных терминалах смена фона недоступна.
-        }
-    }
-
     public static void Banner()
     {
         AnsiConsole.Clear();

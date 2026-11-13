@@ -21,8 +21,6 @@ public class App
 
     public void Run()
     {
-        Theme.InitializeConsole();
-
         if (_warning is not null)
         {
             Theme.Banner();
