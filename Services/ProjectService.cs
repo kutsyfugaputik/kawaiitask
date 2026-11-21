@@ -2,9 +2,15 @@ using KawaiiTasks.Models;
 
 namespace KawaiiTasks.Services;
 
-/// <summary>Вся работа с проектами и задачами. После каждого изменения данные сохраняются.</summary>
+/// <summary>
+/// Вся работа с проектами и задачами. После каждого изменения данные сохраняются.
+/// Консольный интерфейс обращается только сюда и не трогает файл данных напрямую.
+/// </summary>
 public class ProjectService
 {
+    public const int MaxProjectName = 60;
+    public const int MaxProjectDescription = 200;
+
     private readonly IStorage _storage;
     private readonly AppData _data;
 
@@ -12,13 +18,50 @@ public class ProjectService
     {
         _storage = storage;
         _data = storage.Load();
+        _data.Normalize();   // страховка от ручной правки/повреждения файла (см. AppData.Normalize)
     }
 
+    /// <summary>Только для чтения: менять список можно лишь через методы сервиса, чтобы не забыть сохранить.</summary>
     public IReadOnlyList<Project> Projects => _data.Projects;
 
     public string StoragePath => _storage.Location;
 
-    public string DataFolder => Path.GetDirectoryName(_storage.Location) ?? AppContext.BaseDirectory;
+    /// <summary>Корневая папка исходного проекта (при публикации - папка приложения).</summary>
+    public string ProjectFolder => FindProjectFolder();
+
+    /// <summary>Отчёты всегда лежат отдельно в папке reports внутри проекта.</summary>
+    public string ReportsFolder => Path.Combine(ProjectFolder, "reports");
+
+    /// <summary>
+    /// Ищет папку с KawaiiTasks.csproj, поднимаясь от папки exe вверх.
+    /// При запуске через `dotnet run` exe лежит в bin/Debug/net8.0/, а отчёты должны попасть
+    /// в папку исходников, а не в служебную bin.
+    /// </summary>
+    private static string FindProjectFolder()
+    {
+        var starts = new[]
+        {
+            AppContext.BaseDirectory,          // папка, где лежит запущенная сборка
+            Environment.CurrentDirectory       // текущая папка терминала, из которой запустили программу
+        };
+
+        foreach (var start in starts)
+        {
+            DirectoryInfo? current;
+            try { current = new DirectoryInfo(start); }
+            catch (ArgumentException) { continue; }
+
+            while (current is not null)
+            {
+                if (File.Exists(Path.Combine(current.FullName, "KawaiiTasks.csproj")))
+                    return current.FullName;
+                current = current.Parent;
+            }
+        }
+
+        // Для опубликованного приложения без исходников используем папку exe.
+        return AppContext.BaseDirectory;
+    }
 
     // ---------- проекты ----------
 
@@ -27,16 +70,20 @@ public class ProjectService
         var value = (name ?? "").Trim();
         if (value.Length == 0)
             throw new KawaiiException("Название проекта не может быть пустым.");
-        if (value.Length > 60)
-            throw new KawaiiException("Название проекта слишком длинное (максимум 60 символов).");
+        if (value.Length > MaxProjectName)
+            throw new KawaiiException($"Название проекта слишком длинное (максимум {MaxProjectName} символов).");
         if (_data.Projects.Any(p => string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase)))
             throw new KawaiiException("Проект с таким названием уже существует.");
+
+        var text = (description ?? "").Trim();
+        if (text.Length > MaxProjectDescription)
+            throw new KawaiiException($"Описание проекта слишком длинное (максимум {MaxProjectDescription} символов).");
 
         var project = new Project
         {
             Id = _data.NextProjectId++,
             Name = value,
-            Description = (description ?? "").Trim(),
+            Description = text,
             CreatedAt = DateTime.Now
         };
         _data.Projects.Add(project);
@@ -119,7 +166,10 @@ public class ProjectService
         Save();
     }
 
-    /// <summary>Применить произвольную правку (название, описание, приоритет…) и сохранить.</summary>
+    /// <summary>
+    /// Применить произвольную правку (название, описание, приоритет...) и сохранить.
+    /// Если правка бросит исключение, Save не вызовется - на диск попадут только корректные данные.
+    /// </summary>
     public void Update(Action change)
     {
         change();
