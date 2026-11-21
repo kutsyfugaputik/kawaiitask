@@ -2,8 +2,10 @@ using KawaiiTasks.Models;
 
 namespace KawaiiTasks.Services;
 
+/// <summary>Статистика одного участника команды для отчёта.</summary>
 public record MemberStat(string Name, string Role, int Assigned, int Done, int Minutes);
 
+/// <summary>Готовый «снимок» статистики проекта: его потом выводят и в консоль, и в Markdown-файл.</summary>
 public record ProjectReport(
     Project Project,
     DateTime GeneratedAt,
@@ -19,13 +21,13 @@ public record ProjectReport(
     int CandyPoints,
     List<TaskItem> TopByTime);
 
-/// <summary>Сбор статистики по проекту + игровая механика «конфеток».</summary>
+/// <summary>Сбор статистики по проекту + игровая механика 'конфеток'.</summary>
 public static class ReportService
 {
     private static readonly string[] LevelNames =
         { "Зефирка", "Маршмеллоу", "Пончик", "Единорожка", "Королева кода" };
 
-    /// <summary>Конфетки за выполненную задачу: приоритет × 10, +5 за сдачу в срок.</summary>
+    /// <summary>Конфетки за выполненную задачу: приоритет x 10, +5 за сдачу в срок.</summary>
     public static int TaskPoints(TaskItem task)
     {
         if (!task.IsDone) return 0;
@@ -36,10 +38,11 @@ public static class ReportService
 
     public static int CandyPoints(Project project) => project.Tasks.Sum(TaskPoints);
 
+    /// <summary>Уровень растёт каждые 50 баллов и упирается в последнее название из списка.</summary>
     public static (int Level, string Name) Level(int points)
     {
-        var index = Math.Max(0, points) / 50;
-        return (index + 1, LevelNames[Math.Min(index, LevelNames.Length - 1)]);
+        var index = Math.Min(Math.Max(0, points) / 50, LevelNames.Length - 1);
+        return (index + 1, LevelNames[index]);
     }
 
     public static ProjectReport Build(Project project)
@@ -47,6 +50,7 @@ public static class ReportService
         var total = project.Tasks.Count;
         var done = project.Tasks.Count(t => t.IsDone);
 
+        // Перебираем ВСЕ значения перечислений (а не только встречающиеся), чтобы в диаграммах были и нулевые колонки.
         var byState = Enum.GetValues<TaskState>()
             .ToDictionary(s => s, s => project.Tasks.Count(t => t.State == s));
         var byPriority = Enum.GetValues<Priority>()
@@ -63,7 +67,7 @@ public static class ReportService
             DateTime.Now,
             total,
             done,
-            total == 0 ? 0 : done * 100.0 / total,
+            total == 0 ? 0 : done * 100.0 / total,   // защита от деления на ноль в пустом проекте
             byState,
             byPriority,
             project.Tasks.Sum(t => t.SpentMinutes),
