@@ -1,245 +1,400 @@
+// Подключаем пространство имён для работы с регулярными выражениями.
 using System.Text.RegularExpressions;
+
+// Подключаем модели проекта: состояния задач, приоритеты и типы задач.
 using KawaiiTasks.Models;
+
+// Подключаем классы интерфейса: ввод данных, форматирование, тему и талисман.
 using KawaiiTasks.UI;
 
+// Объявляем пространство имён для тестов проекта.
 namespace KawaiiTasks.Tests;
 
 /// <summary>
-/// Тесты "чистых" помощников интерфейса: разбор ввода, форматирование, настроение талисмана.
-/// Сам вывод в терминал здесь не проверяется - для него нужен настоящий терминал.
+/// Тесты вспомогательных методов интерфейса.
+/// Проверяется разбор пользовательского ввода, форматирование данных,
+/// работа цветовой темы и настроение талисмана.
+/// Сам вывод в терминал не проверяется, поскольку для этого нужен настоящий терминал.
 /// </summary>
 public class UiHelperTests
 {
     // ---------- ввод длительности ----------
 
+    // [Theory] означает, что один тест будет запущен несколько раз
+    // с разными входными данными, указанными в атрибутах InlineData.
     [Theory]
-    [InlineData("1.5", 90)]
-    [InlineData("1,5", 90)]       // русская запятая
-    [InlineData("0.5", 30)]
-    [InlineData("2", 120)]
-    [InlineData("1:30", 90)]
-    [InlineData("0:01", 1)]
-    [InlineData("24", 1440)]
-    [InlineData("24:00", 1440)]
-    [InlineData("0.01", 1)]       // 0,6 минуты округляется до 1
-    [InlineData("  2:15  ", 135)] // пробелы по краям игнорируются
+    [InlineData("1.5", 90)]       // 1,5 часа должны преобразоваться в 90 минут.
+    [InlineData("1,5", 90)]       // Проверяем поддержку русской десятичной запятой.
+    [InlineData("0.5", 30)]       // Половина часа равна 30 минутам.
+    [InlineData("2", 120)]        // Два часа равны 120 минутам.
+    [InlineData("1:30", 90)]      // Формат часы:минуты должен дать 90 минут.
+    [InlineData("0:01", 1)]       // Одна минута должна распознаваться корректно.
+    [InlineData("24", 1440)]      // 24 часа равны 1440 минутам.
+    [InlineData("24:00", 1440)]   // Проверяем максимальную длительность в формате часы:минуты.
+    [InlineData("0.01", 1)]       // 0,01 часа — 0,6 минуты, результат округляется до 1.
+    [InlineData("  2:15  ", 135)] // Пробелы в начале и конце строки должны игнорироваться.
     public void TryParseDuration_ValidInput(string text, int expectedMinutes)
     {
+        // Проверяем, что метод TryParseDuration успешно распознаёт введённую длительность.
+        // Результат преобразования записывается в переменную minutes.
         Assert.True(Input.TryParseDuration(text, out var minutes));
+
+        // Проверяем, что полученное количество минут совпадает с ожидаемым.
         Assert.Equal(expectedMinutes, minutes);
     }
 
+    // Проверяем, что некорректные значения длительности не принимаются.
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("abc")]
-    [InlineData("0")]
-    [InlineData("0:00")]
-    [InlineData("0.008")]     // округляется до 0 минут
-    [InlineData("-1")]
-    [InlineData("25")]
-    [InlineData("24:01")]
-    [InlineData("1:60")]
-    [InlineData("1:2:3")]
-    [InlineData("1:-5")]
-    [InlineData("1e1")]       // экспонента не допускается
-    [InlineData("NaN")]
-    [InlineData("1 : 30")]
+    [InlineData(null)]       // Отсутствие значения не должно приниматься.
+    [InlineData("")]         // Пустая строка не является длительностью.
+    [InlineData("   ")]      // Строка только из пробелов также считается некорректной.
+    [InlineData("abc")]      // Произвольный текст не должен преобразовываться в минуты.
+    [InlineData("0")]        // Нулевая длительность недопустима.
+    [InlineData("0:00")]     // Ноль часов и ноль минут — недопустимое значение.
+    [InlineData("0.008")]    // Значение округляется до 0 минут, поэтому не принимается.
+    [InlineData("-1")]       // Отрицательная длительность недопустима.
+    [InlineData("25")]       // Длительность больше 24 часов не принимается.
+    [InlineData("24:01")]    // Нельзя указать больше 24 часов.
+    [InlineData("1:60")]     // Количество минут в формате часы:минуты не может быть 60.
+    [InlineData("1:2:3")]    // Формат с тремя частями не поддерживается.
+    [InlineData("1:-5")]     // Отрицательное количество минут недопустимо.
+    [InlineData("1e1")]      // Экспоненциальная запись числа не допускается.
+    [InlineData("NaN")]      // Специальное значение NaN не является допустимой длительностью.
+    [InlineData("1 : 30")]   // Пробелы внутри записи времени не допускаются.
     public void TryParseDuration_InvalidInput(string? text)
     {
+        // Проверяем, что метод возвращает false для некорректного значения.
+        // Даже если результат не удалось получить, переменная minutes должна быть равна 0.
         Assert.False(Input.TryParseDuration(text, out var minutes));
+
+        // Проверяем значение выходного параметра после неудачного преобразования.
         Assert.Equal(0, minutes);
     }
 
     // ---------- ввод даты ----------
 
+    // Проверяем успешное преобразование строк в даты.
     [Theory]
-    [InlineData("25.12.2026", 2026, 12, 25)]
-    [InlineData("5.3.2027", 2027, 3, 5)]
-    [InlineData("05.03.27", 2027, 3, 5)]
-    [InlineData("  01.01.2030 ", 2030, 1, 1)]
+    [InlineData("25.12.2026", 2026, 12, 25)] // Полная дата: день, месяц и год.
+    [InlineData("5.3.2027", 2027, 3, 5)]     // День и месяц могут состоять из одной цифры.
+    [InlineData("05.03.27", 2027, 3, 5)]    // Проверяем обработку короткой записи года.
+    [InlineData("  01.01.2030 ", 2030, 1, 1)] // Пробелы по краям даты игнорируются.
     public void TryParseDate_ValidInput(string text, int year, int month, int day)
     {
+        // Проверяем, что строка успешно преобразуется в дату.
+        // Полученная дата сохраняется в переменную date.
         Assert.True(Input.TryParseDate(text, out var date));
+
+        // Создаём ожидаемую дату из года, месяца и дня.
+        // Затем сравниваем её с результатом работы метода.
         Assert.Equal(new DateTime(year, month, day), date);
     }
 
+    // Проверяем отклонение некорректных значений даты.
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("2026-12-25")]
-    [InlineData("31.02.2026")]
-    [InlineData("32.01.2026")]
-    [InlineData("25/12/2026")]
-    [InlineData("завтра")]
+    [InlineData(null)]           // Отсутствующая дата не принимается.
+    [InlineData("")]             // Пустая строка не является датой.
+    [InlineData("2026-12-25")]   // Формат год-месяц-день не поддерживается этим методом.
+    [InlineData("31.02.2026")]   // В феврале нет 31-го числа.
+    [InlineData("32.01.2026")]   // Не существует 32-го дня месяца.
+    [InlineData("25/12/2026")]   // Формат с косыми чертами не поддерживается.
+    [InlineData("завтра")]        // Произвольный текст не является датой.
     public void TryParseDate_InvalidInput(string? text)
     {
+        // Проверяем, что метод возвращает false для неправильной даты.
+        // Символ подчёркивания означает, что выходное значение нам не требуется.
         Assert.False(Input.TryParseDate(text, out _));
     }
 
     // ---------- да / нет ----------
 
+    // Проверяем, какие варианты пользовательского ответа распознаются как "да".
     [Theory]
-    [InlineData("да")]
-    [InlineData("ДА")]
-    [InlineData("д")]
-    [InlineData("y")]
-    [InlineData(" Y ")]
-    public void ParseYesNo_Yes(string text) => Assert.True(Input.ParseYesNo(text));
+    [InlineData("да")]  // Обычный ответ на русском языке.
+    [InlineData("ДА")]  // Проверяем распознавание заглавных букв.
+    [InlineData("д")]   // Допускается сокращённая форма ответа.
+    [InlineData("y")]   // Допускается английская буква Y.
+    [InlineData(" Y ")] // Пробелы вокруг ответа должны игнорироваться.
+    public void ParseYesNo_Yes(string text) =>
+        // Проверяем, что метод ParseYesNo возвращает true.
+        Assert.True(Input.ParseYesNo(text));
 
+    // Проверяем варианты ответа, которые должны означать "нет".
     [Theory]
-    [InlineData("нет")]
-    [InlineData("Нет")]
-    [InlineData("н")]
-    [InlineData("n")]
-    [InlineData("")]        // пустой ввод = безопасное "нет"
-    [InlineData("   ")]
-    [InlineData(null)]
-    public void ParseYesNo_No(string? text) => Assert.False(Input.ParseYesNo(text));
+    [InlineData("нет")] // Полный ответ на русском языке.
+    [InlineData("Нет")] // Проверяем другой регистр букв.
+    [InlineData("н")]   // Допускается сокращённая форма ответа.
+    [InlineData("n")]   // Допускается английская буква N.
+    [InlineData("")]    // Пустой ввод считается безопасным ответом "нет".
+    [InlineData("   ")] // Строка из пробелов также считается ответом "нет".
+    [InlineData(null)]  // Отсутствие ответа обрабатывается как "нет".
+    public void ParseYesNo_No(string? text) =>
+        // Проверяем, что метод ParseYesNo возвращает false.
+        Assert.False(Input.ParseYesNo(text));
 
+    // Проверяем поведение метода при неизвестном варианте ответа.
     [Theory]
-    [InlineData("может быть")]
-    [InlineData("yes")]
-    [InlineData("1")]
-    public void ParseYesNo_Unknown_ReturnsNull(string text) => Assert.Null(Input.ParseYesNo(text));
+    [InlineData("может быть")] // Неоднозначный ответ.
+    [InlineData("yes")]        // Полное английское слово не входит в список допустимых ответов.
+    [InlineData("1")]          // Число не является ответом "да" или "нет".
+    public void ParseYesNo_Unknown_ReturnsNull(string text) =>
+        // Проверяем, что для неизвестного ответа метод возвращает null.
+        Assert.Null(Input.ParseYesNo(text));
 
     // ---------- форматирование ----------
 
+    // Проверяем преобразование количества минут в удобный текстовый формат.
     [Theory]
-    [InlineData(0, "-")]
-    [InlineData(-5, "-")]
-    [InlineData(5, "0ч 05м")]
-    [InlineData(60, "1ч 00м")]
-    [InlineData(135, "2ч 15м")]
-    [InlineData(1440, "24ч 00м")]
-    public void Views_Fmt(int minutes, string expected) => Assert.Equal(expected, Views.Fmt(minutes));
+    [InlineData(0, "-")]           // Нулевое время отображается прочерком.
+    [InlineData(-5, "-")]          // Отрицательное время также отображается прочерком.
+    [InlineData(5, "0ч 05м")]      // Пять минут: 0 часов и 5 минут.
+    [InlineData(60, "1ч 00м")]     // Один час: 1 час и 0 минут.
+    [InlineData(135, "2ч 15м")]    // 135 минут преобразуются в 2 часа и 15 минут.
+    [InlineData(1440, "24ч 00м")]  // 1440 минут преобразуются в 24 часа.
+    public void Views_Fmt(int minutes, string expected) =>
+        // Сравниваем результат форматирования с ожидаемой строкой.
+        Assert.Equal(expected, Views.Fmt(minutes));
 
+    // Проверяем форматирование даты и обработку отсутствующего значения.
     [Fact]
     public void Views_Date_FormatsOrDash()
     {
+        // Проверяем, что дата отображается в формате день.месяц.год.
         Assert.Equal("05.03.2027", Views.Date(new DateTime(2027, 3, 5)));
+
+        // Проверяем, что вместо отсутствующей даты отображается прочерк.
         Assert.Equal("-", Views.Date(null));
     }
 
+    // Проверяем сокращение длинного текста до указанного количества символов.
     [Theory]
-    [InlineData("коротко", 10, "коротко")]
-    [InlineData("1234567890", 10, "1234567890")]       // ровно по длине - без многоточия
-    [InlineData("12345678901", 10, "1234567...")]
-    [InlineData("очень длинное название", 10, "очень д...")]
-    [InlineData("abcdef", 3, "abc")]                   // слишком узко для многоточия
-    [InlineData("abc", 0, "")]
-    public void Views_Short(string text, int max, string expected) => Assert.Equal(expected, Views.Short(text, max));
+    [InlineData("коротко", 10, "коротко")]             // Короткий текст остаётся без изменений.
+    [InlineData("1234567890", 10, "1234567890")]       // Текст ровно нужной длины не сокращается.
+    [InlineData("12345678901", 10, "1234567...")]      // Длинный текст сокращается с многоточием.
+    [InlineData("очень длинное название", 10, "очень д...")] // Проверяем сокращение русскоязычного текста.
+    [InlineData("abcdef", 3, "abc")]                   // При маленькой ширине многоточие не помещается.
+    [InlineData("abc", 0, "")]                         // При максимальной длине 0 возвращается пустая строка.
+    public void Views_Short(string text, int max, string expected) =>
+        // Проверяем, что метод Short возвращает строку ожидаемой длины и содержания.
+        Assert.Equal(expected, Views.Short(text, max));
 
     // ---------- тема ----------
 
+    // Проверяем преобразование HEX-кода цвета в отдельные цветовые каналы.
     [Fact]
     public void Theme_FromHex_ParsesChannels()
     {
+        // Преобразуем HEX-цвет #ff9ecb в объект цвета.
         var color = Theme.FromHex("#ff9ecb");
 
+        // Проверяем красный канал цвета (R).
         Assert.Equal(0xff, color.R);
+
+        // Проверяем зелёный канал цвета (G).
         Assert.Equal(0x9e, color.G);
+
+        // Проверяем синий канал цвета (B).
         Assert.Equal(0xcb, color.B);
-        Assert.Equal(Theme.FromHex("ff9ecb"), color);   // # необязательна
+
+        // Проверяем, что символ # в начале HEX-кода необязателен.
+        // Оба варианта записи должны давать одинаковый цвет.
+        Assert.Equal(Theme.FromHex("ff9ecb"), color);
     }
 
+    // Проверяем, что все цвета палитры имеют корректный HEX-формат.
     [Fact]
     public void Theme_AllPaletteColorsAreValidHex()
     {
-        foreach (var hex in new[] { Theme.Pink, Theme.Lavender, Theme.Mint, Theme.Peach, Theme.Sky,
-                                    Theme.Lemon, Theme.Berry, Theme.Cocoa, Theme.Rose, Theme.PaperBg, Theme.PaperFg })
+        // Собираем все цвета темы в один массив.
+        var colors = new[]
+        {
+            Theme.Pink,      // Розовый цвет.
+            Theme.Lavender,  // Лавандовый цвет.
+            Theme.Mint,      // Мятный цвет.
+            Theme.Peach,     // Персиковый цвет.
+            Theme.Sky,       // Небесно-голубой цвет.
+            Theme.Lemon,     // Лимонный цвет.
+            Theme.Berry,     // Ягодный цвет.
+            Theme.Cocoa,     // Цвет какао.
+            Theme.Rose,      // Розовый оттенок.
+            Theme.PaperBg,   // Цвет фона.
+            Theme.PaperFg    // Цвет текста.
+        };
+
+        // Перебираем каждый цвет из палитры.
+        foreach (var hex in colors)
+        {
+            // Проверяем соответствие формату HEX:
+            // символ #, затем ровно шесть шестнадцатеричных символов.
+            // Допускаются цифры от 0 до 9 и буквы от A до F в любом регистре.
             Assert.Matches("^#[0-9a-fA-F]{6}$", hex);
+        }
     }
 
+    // Проверяем экранирование квадратных скобок и обработку null.
     [Fact]
     public void Theme_E_EscapesSquareBrackets_AndHandlesNull()
     {
+        // Проверяем, что квадратные скобки в пользовательском тексте удваиваются.
         Assert.Equal("[[red]]x[[/]]", Theme.E("[red]x[/]"));
+
+        // Проверяем, что вместо null возвращается пустая строка.
         Assert.Equal("", Theme.E(null));
+
+        // Проверяем, что обычный текст без скобок остаётся неизменным.
         Assert.Equal("без скобок", Theme.E("без скобок"));
     }
 
+    // Проверяем, что пользовательский текст безопасно обрабатывается Spectre.Console.
     [Fact]
     public void Theme_E_MakesUserTextSafeForSpectreMarkup()
     {
-        var ex = Record.Exception(() => new Spectre.Console.Markup($"[bold]{Theme.E("Баг [срочно] и [/] ещё")}[/]"));
+        // Record.Exception выполняет переданное действие и возвращает возникшее исключение.
+        // Если исключения нет, результатом будет null.
+        // Внутри создаётся разметка Spectre.Console с пользовательским текстом,
+        // который предварительно обрабатывается методом Theme.E.
+        var ex = Record.Exception(() =>
+            new Spectre.Console.Markup($"[bold]{Theme.E("Баг [срочно] и [/] ещё")}[/]"));
 
+        // Проверяем, что создание разметки завершилось без исключений.
         Assert.Null(ex);
     }
 
+    // Проверяем, что для каждого состояния задачи используется отдельная иконка.
     [Fact]
     public void Theme_StateIcons_AreDistinct_AndAvoidQuestionMark()
     {
-        var icons = Enum.GetValues<TaskState>().Select(Theme.StateIcon).ToList();
+        // Получаем все возможные значения перечисления TaskState.
+        // Для каждого состояния получаем соответствующую иконку.
+        // ToList() преобразует результаты в список.
+        var icons = Enum.GetValues<TaskState>()
+            .Select(Theme.StateIcon)
+            .ToList();
 
+        // Проверяем, что количество всех иконок совпадает с количеством уникальных.
+        // Это означает, что одинаковые иконки не используются для разных состояний.
         Assert.Equal(icons.Count, icons.Distinct().Count());
+
+        // Проверяем, что среди иконок нет вопросительного знака.
         Assert.DoesNotContain("?", icons);
     }
 
+    // Проверяем отображение приоритетов с помощью звёздочек.
     [Fact]
     public void Theme_PriorityStars_GrowWithPriority()
     {
+        // Для низкого приоритета ожидается одна звёздочка и три точки.
         Assert.Equal("*...", Theme.PriorityStars(Priority.Low));
+
+        // Для критического приоритета ожидаются четыре звёздочки.
         Assert.Equal("****", Theme.PriorityStars(Priority.Critical));
     }
 
+    // Проверяем формирование декоративной разметки с учётом ширины.
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(10)]
-    [InlineData(41)]
+    [InlineData(0)]  // Проверяем нулевую ширину.
+    [InlineData(1)]  // Проверяем ширину меньше двух столбцов.
+    [InlineData(2)]  // Проверяем минимальную ширину для одного символа.
+    [InlineData(10)] // Проверяем обычную ширину.
+    [InlineData(41)] // Проверяем нечётную ширину.
     public void Theme_SparkleMarkup_HasOneMarkPerTwoColumns(int width)
     {
+        // Создаём разметку декоративного оформления для заданной ширины.
         var markup = Theme.SparkleMarkup(width);
 
+        // С помощью регулярного выражения ищем все вхождения "[/]".
+        // Matches возвращает найденные совпадения.
+        // Count показывает количество найденных элементов.
         var marks = Regex.Matches(markup, @"\[/\]").Count;
+
+        // Проверяем, что количество декоративных элементов равно половине ширины.
+        // Целочисленное деление отбрасывает остаток для нечётных значений.
         Assert.Equal(width / 2, marks);
     }
 
     // ---------- талисман ----------
 
+    // Проверяем, как настроение талисмана зависит от состояния проекта.
     [Fact]
     public void Mascot_Mood_DependsOnProjectState()
     {
+        // Создаём тестовый проект с помощью вспомогательного класса Make.
         var project = Make.NewProject();
-        Assert.Equal(Mood.Sleepy, Mascot.MoodFor(project));               // нет задач
 
+        // Если в проекте нет задач, настроение талисмана должно быть сонным.
+        Assert.Equal(Mood.Sleepy, Mascot.MoodFor(project));
+
+        // Добавляем в проект новую задачу с названием "A".
         var task = Make.NewTask(project, "A");
-        Assert.Equal(Mood.Happy, Mascot.MoodFor(project));                // всё спокойно
 
+        // Если задача есть и просрочек нет, талисман должен быть довольным.
+        Assert.Equal(Mood.Happy, Mascot.MoodFor(project));
+
+        // Устанавливаем срок выполнения задачи на вчерашний день.
+        // Это создаёт условие для проверки просроченной задачи.
         task.Deadline = DateTime.Today.AddDays(-1);
-        Assert.Equal(Mood.Worried, Mascot.MoodFor(project));              // есть просрочка
 
+        // При наличии просроченной задачи настроение должно стать тревожным.
+        Assert.Equal(Mood.Worried, Mascot.MoodFor(project));
+
+        // Переводим задачу в состояние Done — выполнено.
         task.ChangeState(TaskState.Done);
-        Assert.Equal(Mood.Party, Mascot.MoodFor(project));                // всё готово
+
+        // Если все задачи выполнены, настроение талисмана должно стать праздничным.
+        Assert.Equal(Mood.Party, Mascot.MoodFor(project));
     }
 
+    // Проверяем, что для каждого настроения талисмана определены все необходимые данные.
     [Fact]
     public void Mascot_HasFaceArtColorAndPhrase_ForEveryMood()
     {
+        // Получаем все возможные значения перечисления Mood.
         foreach (var mood in Enum.GetValues<Mood>())
         {
+            // Проверяем, что для настроения существует непустое описание лица.
             Assert.False(string.IsNullOrWhiteSpace(Mascot.Face(mood)));
+
+            // Проверяем, что для настроения существует непустой ASCII-арт.
             Assert.False(string.IsNullOrWhiteSpace(Mascot.Art(mood)));
+
+            // Проверяем, что для настроения существует непустая фраза талисмана.
             Assert.False(string.IsNullOrWhiteSpace(Mascot.Phrase(mood)));
+
+            // Проверяем, что цвет настроения записан в корректном HEX-формате.
             Assert.Matches("^#[0-9a-fA-F]{6}$", Mascot.ColorFor(mood));
         }
     }
 
     // ---------- подписи перечислений ----------
 
+    // Проверяем, что каждому значению перечислений соответствует уникальная подпись.
     [Fact]
     public void EnumText_EveryValueHasUniqueNonEmptyLabel()
     {
-        var priorities = Enum.GetValues<Priority>().Select(p => p.Text()).ToList();
-        var states = Enum.GetValues<TaskState>().Select(s => s.Text()).ToList();
-        var kinds = Enum.GetValues<TaskKind>().Select(k => k.Text()).ToList();
+        // Получаем все значения приоритетов и преобразуем каждое в текстовую подпись.
+        var priorities = Enum.GetValues<Priority>()
+            .Select(p => p.Text())
+            .ToList();
 
+        // Получаем все значения состояний задач и преобразуем их в подписи.
+        var states = Enum.GetValues<TaskState>()
+            .Select(s => s.Text())
+            .ToList();
+
+        // Получаем все значения типов задач и преобразуем их в подписи.
+        var kinds = Enum.GetValues<TaskKind>()
+            .Select(k => k.Text())
+            .ToList();
+
+        // Объединяем три списка в массив для последовательной проверки.
         foreach (var labels in new[] { priorities, states, kinds })
         {
-            Assert.All(labels, label => Assert.False(string.IsNullOrWhiteSpace(label)));
+            // Проверяем, что каждая подпись существует и не состоит только из пробелов.
+            Assert.All(labels, label =>
+                Assert.False(string.IsNullOrWhiteSpace(label)));
+
+            // Проверяем уникальность подписей внутри каждого перечисления.
+            // Количество всех элементов должно совпадать с количеством уникальных.
             Assert.Equal(labels.Count, labels.Distinct().Count());
         }
     }
