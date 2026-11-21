@@ -7,6 +7,7 @@ public class TaskItem
 {
     public const int MaxTitle = 80;
     public const int MaxDescription = 500;
+    public const int MaxNote = 100;
 
     public int Id { get; set; }
     public string Title { get; set; } = "";
@@ -14,14 +15,19 @@ public class TaskItem
     public Priority Priority { get; set; } = Priority.Medium;
     public TaskKind Kind { get; set; } = TaskKind.Feature;
     public TaskState State { get; set; } = TaskState.Todo;
+
+    /// <summary>ID исполнителя из <see cref="Project.Team"/>; null = задача никому не назначена.</summary>
     public int? AssigneeId { get; set; }
     public DateTime? Deadline { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime? CompletedAt { get; set; }
     public List<TimeEntry> TimeLog { get; set; } = new();
 
+    // Вычисляемые свойства помечены [JsonIgnore]: они выводятся из остальных полей, хранить их незачем.
     [JsonIgnore] public int SpentMinutes => TimeLog.Sum(t => t.Minutes);
     [JsonIgnore] public bool IsDone => State == TaskState.Done;
+
+    /// <summary>Просрочена, если не готова и срок (по календарной дате) строго раньше сегодняшнего дня.</summary>
     [JsonIgnore] public bool IsOverdue => !IsDone && Deadline.HasValue && Deadline.Value.Date < DateTime.Today;
 
     public void Rename(string? title)
@@ -42,6 +48,7 @@ public class TaskItem
         Description = value;
     }
 
+    /// <summary>Устанавливает срок (только дата, без времени). null снимает срок. Прошедшие даты запрещены.</summary>
     public void SetDeadline(DateTime? deadline)
     {
         if (deadline.HasValue && deadline.Value.Date < DateTime.Today)
@@ -49,22 +56,33 @@ public class TaskItem
         Deadline = deadline?.Date;
     }
 
+    /// <summary>
+    /// Меняет статус. При переходе в Done запоминает момент завершения (от него зависят баллы за «сдачу в срок»),
+    /// при выходе из Done - сбрасывает. Повторная установка того же статуса ничего не меняет,
+    /// чтобы не затирать исходное время завершения.
+    /// </summary>
     public void ChangeState(TaskState state)
     {
+        if (State == state) return;
         State = state;
         CompletedAt = state == TaskState.Done ? DateTime.Now : null;
     }
 
+    /// <summary>Добавляет запись о времени: от 1 минуты до 24 часов за один раз.</summary>
     public TimeEntry LogTime(int minutes, string? note = null, DateTime? date = null)
     {
         if (minutes < 1 || minutes > 24 * 60)
             throw new KawaiiException("За один раз можно записать от 1 минуты до 24 часов.");
 
+        var text = (note ?? "").Trim();
+        if (text.Length > MaxNote)
+            throw new KawaiiException($"Заметка слишком длинная (максимум {MaxNote} символов).");
+
         var entry = new TimeEntry
         {
             Date = date ?? DateTime.Now,
             Minutes = minutes,
-            Note = (note ?? "").Trim()
+            Note = text
         };
         TimeLog.Add(entry);
         return entry;
