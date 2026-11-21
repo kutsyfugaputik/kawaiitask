@@ -1,33 +1,94 @@
+<!--
+    Указываем, что проект использует стандартную систему сборки .NET SDK.
+    Microsoft.NET.Sdk автоматически подключает необходимые инструменты
+    для компиляции C# и обработки файлов проекта.
+-->
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!--
-    Отдельный проект с юнит-тестами (xUnit). Лежит в папке Tests, поэтому основной проект его не компилирует
-    (см. <Compile Remove="Tests/**" /> в ../KawaiiTasks.csproj).
-    Запуск из корня репозитория:  dotnet test Tests/KawaiiTasks.Tests.csproj
-  -->
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-  </PropertyGroup>
+    <!--
+        Отдельный проект с модульными тестами (xUnit).
+        Находится в папке Tests, поэтому основной проект не должен компилировать
+        его исходные файлы (это настраивается через Compile Remove в основном .csproj).
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
-    <PackageReference Include="coverlet.collector" Version="6.0.2" />
-  </ItemGroup>
+        Запуск тестов из корня репозитория:
+        dotnet test Tests/KawaiiTasks.Tests.csproj
+    -->
 
-  <ItemGroup>
-    <!-- Тестируем код основного приложения напрямую. -->
-    <ProjectReference Include="..\KawaiiTasks.csproj" />
-  </ItemGroup>
+    <!-- PropertyGroup содержит основные параметры сборки проекта. -->
+    <PropertyGroup>
 
-  <ItemGroup>
-    <!-- Не писать "using Xunit;" в каждом файле. -->
-    <Using Include="Xunit" />
-  </ItemGroup>
+        <!-- Указываем целевую платформу .NET 8.0.
+             Проект тестов будет собираться для этой версии .NET. -->
+        <TargetFramework>net8.0</TargetFramework>
+
+        <!-- Автоматически подключаем стандартные пространства имён .NET.
+             Благодаря этому не требуется вручную добавлять некоторые using
+             в каждом файле тестов. -->
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!-- Включаем проверку nullable-ссылочных типов.
+             Компилятор сможет предупреждать о возможном использовании null
+             там, где ожидается объект или строка. -->
+        <Nullable>enable</Nullable>
+
+        <!-- Запрещаем упаковку проекта в NuGet-пакет.
+             Тестовый проект предназначен для проверки приложения,
+             а не для распространения в виде библиотеки. -->
+        <IsPackable>false</IsPackable>
+
+        <!-- Помечаем проект как проект тестирования.
+             Это позволяет инструментам .NET распознавать его как набор тестов
+             и выполнять тесты командой dotnet test. -->
+        <IsTestProject>true</IsTestProject>
+
+    </PropertyGroup>
+
+    <!-- ItemGroup содержит подключаемые зависимости проекта. -->
+    <ItemGroup>
+
+        <!-- Microsoft.NET.Test.Sdk предоставляет инфраструктуру запуска тестов.
+             Обеспечивает взаимодействие тестового проекта с командой dotnet test. -->
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+
+        <!-- xUnit — библиотека для написания и выполнения модульных тестов.
+             Предоставляет атрибуты [Fact], [Theory], проверки Assert и другие инструменты. -->
+        <PackageReference Include="xunit" Version="2.9.2" />
+
+        <!-- xUnit Runner для Visual Studio.
+             Позволяет обнаруживать и запускать тесты через обозреватель тестов IDE,
+             а также интегрируется с тестовой инфраструктурой .NET. -->
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+
+        <!-- Coverlet Collector собирает данные о покрытии кода тестами.
+             Позволяет определить, какие участки приложения выполнялись
+             во время тестирования. -->
+        <PackageReference Include="coverlet.collector" Version="6.0.2" />
+
+    </ItemGroup>
+
+    <!-- Подключаем основной проект приложения как зависимость тестового проекта. -->
+    <ItemGroup>
+
+        <!-- ProjectReference связывает тесты с KawaiiTasks.csproj.
+             Благодаря этому тесты могут обращаться к классам, методам и моделям
+             основного приложения без копирования исходного кода.
+
+             Относительный путь .. означает переход на уровень выше из папки Tests. -->
+        <ProjectReference Include="..\KawaiiTasks.csproj" />
+
+    </ItemGroup>
+
+    <!-- Настройки глобальных подключений пространств имён. -->
+    <ItemGroup>
+
+        <!-- Подключаем пространство имён Xunit глобально.
+             Благодаря этому в файлах тестов не требуется каждый раз писать:
+             using Xunit;
+
+             Атрибуты [Fact], [Theory] и класс Assert становятся доступны
+             непосредственно в исходных файлах тестов. -->
+        <Using Include="Xunit" />
+
+    </ItemGroup>
 
 </Project>
