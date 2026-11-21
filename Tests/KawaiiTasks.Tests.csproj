@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Отдельный проект с юнит-тестами (xUnit). Лежит в папке Tests, поэтому основной проект его не компилирует
+    (см. <Compile Remove="Tests/**" /> в ../KawaiiTasks.csproj).
+    Запуск из корня репозитория:  dotnet test Tests/KawaiiTasks.Tests.csproj
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Тестируем код основного приложения напрямую. -->
+    <ProjectReference Include="..\KawaiiTasks.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Не писать "using Xunit;" в каждом файле. -->
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>
