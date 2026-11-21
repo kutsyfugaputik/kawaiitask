@@ -2,7 +2,11 @@ using KawaiiTasks.Models;
 
 namespace KawaiiTasks.Services;
 
-/// <summary>Готовый пример проекта — чтобы сразу было что показать на защите.</summary>
+/// <summary>
+/// Готовый пример проекта - чтобы сразу было что показать на защите.
+/// Здесь есть все интересные случаи: выполненные задачи с баллами, задачи в работе и на проверке,
+/// задача без исполнителя и одна намеренно просроченная.
+/// </summary>
 public static class DemoData
 {
     public static Project Create(int id)
@@ -10,8 +14,8 @@ public static class DemoData
         var p = new Project
         {
             Id = id,
-            Name = "Демо: приложение «Зефирка»",
-            Description = "Мобильное приложение для заказа сладостей — пример проекта с командой и задачами.",
+            Name = "Демо: приложение 'Зефирка'",
+            Description = "Мобильное приложение для заказа сладостей - пример проекта с командой и задачами.",
             CreatedAt = DateTime.Now.AddDays(-14)
         };
 
@@ -19,7 +23,7 @@ public static class DemoData
         var misha = p.AddMember("Миша", "Разработчик");
         var sasha = p.AddMember("Саша", "Тестировщик");
         var lina = p.AddMember("Лина", "Дизайнер");
-        var today = DateTime.Today;
+        var today = DateTime.Today;   // все сроки считаются от сегодняшнего дня, поэтому демо не «стареет»
 
         var t1 = p.AddTask("Нарисовать макеты экранов", "Главный экран, корзина и профиль в пастельной гамме.",
             Priority.High, TaskKind.Feature, lina.Id, today.AddDays(3));
@@ -42,7 +46,7 @@ public static class DemoData
         t4.LogTime(90, "Модель корзины", today);
         t4.ChangeState(TaskState.InProgress);
 
-        var t5 = p.AddTask("Баг: падение при пустой корзине", "Приложение закрывается при нажатии «Оформить».",
+        var t5 = p.AddTask("Баг: падение при пустой корзине", "Приложение закрывается при нажатии 'Оформить'.",
             Priority.Critical, TaskKind.Bug, sasha.Id, today);
         t5.LogTime(60, "Воспроизведение и анализ", today);
         t5.ChangeState(TaskState.Review);
@@ -58,11 +62,13 @@ public static class DemoData
 
         var t9 = p.AddTask("Настроить CI", "Автосборка и запуск тестов при каждом коммите.",
             Priority.High, TaskKind.Chore, anya.Id, today.AddDays(1));
+        // Срок в прошлом SetDeadline запретил бы, поэтому для демо присваиваем напрямую.
         t9.Deadline = today.AddDays(-2); // намеренно просрочена, чтобы показать предупреждения
 
         return p;
     }
 
+    /// <summary>Помечает задачу выполненной «задним числом» (ChangeState ставит текущее время, а нам нужна дата в прошлом).</summary>
     private static void Finish(TaskItem task, DateTime when)
     {
         task.ChangeState(TaskState.Done);
