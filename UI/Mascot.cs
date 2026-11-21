@@ -1,68 +1,57 @@
 using KawaiiTasks.Models;
-using Spectre.Console.Rendering;
-using KawaiiTasks.Services;
 using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace KawaiiTasks.UI;
 
 public enum Mood { Sleepy, Happy, Worried, Party }
 
-/// <summary>Талисман: чиби-зверюшка, которая меняет настроение в зависимости от состояния проекта.</summary>
+/// <summary>
+/// ASCII-талисман с короткими сообщениями о состоянии проекта.
+/// Рисунки состоят только из обычных ASCII-символов: они гарантированно есть в любом шрифте терминала.
+/// </summary>
 public static class Mascot
 {
     private static readonly string[] Sleepy =
     {
-        "Тут пока пусто… давай добавим первую задачку?",
+        "Тут пока пусто. Давай добавим первую задачу?",
         "Я немного отдохну, пока ты придумываешь план."
     };
 
     private static readonly string[] Happy =
     {
-        "Ты отлично справляешься! Я в тебя верю ♡",
-        "Ещё чуть-чуть — и конфетки твои!",
-        "Маленькие шаги — тоже шаги ✿",
-        "Задача за задачей — и проект готов!"
+        "Ты отлично справляешься!",
+        "Еще немного - и проект будет готов.",
+        "Маленькие шаги тоже приближают к цели.",
+        "Задача за задачей - и все получится!"
     };
 
     private static readonly string[] Worried =
     {
-        "Ой, есть просроченные задачки… но мы всё успеем!",
-        "Дедлайны горят, но ты сильнее! (ง •̀_•́)ง"
+        "Есть просроченные задачи. Проверь сроки.",
+        "Дедлайны близко. Давай расставим приоритеты."
     };
 
     private static readonly string[] Party =
     {
-        "УРА! Все задачи готовы! Время тортика ♡",
-        "Проект завершён! Ты просто чудо ✧"
+        "Ура! Все задачи готовы! Отличная работа!",
+        "Проект завершен. Можно праздновать результат!"
     };
 
     public static string Face(Mood mood) => mood switch
     {
-        Mood.Sleepy => "(－ω－) zzZ",
-        Mood.Worried => "(；ω；)",
-        Mood.Party => "ヽ(>∀<☆)ノ",
-        _ => "(◕‿◕✿)"
+        Mood.Sleepy => "(-.-) zZ",
+        Mood.Worried => "(T_T)",
+        Mood.Party => "(^_^)/",
+        _ => "(^.^)"
     };
 
-    /// <summary>Рисунок символами (3 строки) для каждого настроения.</summary>
     public static string Art(Mood mood) => mood switch
     {
-        Mood.Sleepy =>
-            "  /\\_/\\    z\n" +
-            " ( -.- )  z\n" +
-            "  > ~ <  Z",
-        Mood.Worried =>
-            " (\\_/)  ;\n" +
-            " (T_T)\n" +
-            " (\")_(\")",
-        Mood.Party =>
-            " ✧ /\\_/\\ ✧\n" +
-            "  ( ^▽^ )\n" +
-            " ☆ > ♡ < ☆",
-        _ =>
-            "  /\\_/\\\n" +
-            " ( ^.^ )\n" +
-            "  > ♡ <"
+        Mood.Sleepy => "  /\\_/\\\n ( -.- )\n  >   <",
+        Mood.Worried => "  /\\_/\\\n ( T_T )\n  >   <",
+        Mood.Party => "  /\\_/\\\n ( ^.^ )\n  > * <",
+        _ => "  /\\_/\\\n ( o.o )\n  >   <"
     };
 
     public static string ColorFor(Mood mood) => mood switch
@@ -73,14 +62,16 @@ public static class Mascot
         _ => Theme.Pink
     };
 
+    /// <summary>Настроение зависит от состояния проекта. Порядок проверок важен: пустой -> всё готово -> есть просрочка.</summary>
     public static Mood MoodFor(Project project)
     {
         if (project.Tasks.Count == 0) return Mood.Sleepy;
-        if (project.Tasks.All(t => t.IsDone)) return Mood.Party;
-        if (project.Tasks.Any(t => t.IsOverdue)) return Mood.Worried;
+        if (project.Tasks.All(task => task.IsDone)) return Mood.Party;
+        if (project.Tasks.Any(task => task.IsOverdue)) return Mood.Worried;
         return Mood.Happy;
     }
 
+    /// <summary>Случайная фраза из набора для настроения (Random.Shared безопасен для вызова из любых потоков).</summary>
     public static string Phrase(Mood mood)
     {
         var pool = mood switch
@@ -93,25 +84,25 @@ public static class Mascot
         return pool[Random.Shared.Next(pool.Length)];
     }
 
-    /// <summary>Приветствие на главном экране: обложка дневника с котиком.</summary>
+    /// <summary>Приветствие на главном экране.</summary>
     public static IRenderable Greeting()
     {
-        var art = new Markup(
-            $"[{Theme.Pink}]  /\\_/\\  ✧\n ( o.o )\n  > ^ <  ♡\n [/][{Theme.Lavender}] ✿ ˚ ✦ ˚ ✿[/]");
-
+        var art = new Markup($"[{Theme.Pink}]{Theme.E(Art(Mood.Happy))}[/]");
         var text = new Markup(
-            $"[bold {Theme.Pink}]Привет! Я Нори-нори ୨୧[/]\n" +
-            "[grey]Твой маленький помощник в мире больших проектов.\n" +
-            "Следим за задачами, дедлайнами и временем вместе![/]\n" +
-            $"[{Theme.Lavender}]Сегодня всё получится. Начнём? ✧[/]\n" +
-            $"[{Theme.Cocoa}]┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈[/]\n" +
-            $"[{Theme.Cocoa}]✎ это твой личный дневник проектов[/]");
+            $"[bold {Theme.Pink}]Привет! Я Нори-нори[/]\n" +
+            "[grey]Твой помощник в мире больших проектов.\n" +
+            "Следим за задачами, сроками и временем вместе![/]\n" +
+            $"[{Theme.Lavender}]Сегодня все получится. Начнем?[/]\n" +
+            $"[{Theme.Cocoa}]------------------------------[/]\n" +
+            $"[{Theme.Cocoa}]Это твой личный дневник проектов.[/]");
 
+        // Grid - невидимая таблица без рамок: слева картинка (колонка не переносится, NoWrap),
+        // справа текст. Spectre.Console сам считает ширину колонок по ширине окна терминала.
         var grid = new Grid();
         grid.AddColumn(new GridColumn { NoWrap = true });
         grid.AddColumn();
         grid.AddRow(art, text);
 
-        return Theme.Page(grid, "~ ДОБРО ПОЖАЛОВАТЬ В ДНЕВНИК ~", Theme.Pink, true, new Padding(3, 1));
+        return Theme.Page(grid, "ДОБРО ПОЖАЛОВАТЬ В ДНЕВНИК", Theme.Pink, true, new Padding(3, 1));
     }
 }
