@@ -4,7 +4,7 @@ namespace KawaiiTasks.Services;
 
 public enum SortKey { Priority, Deadline, State, Title, Time }
 
-/// <summary>Параметры поиска и фильтрации задач.</summary>
+/// <summary>Параметры поиска и фильтрации задач (то, что пользователь выбрал в меню «Поиск и фильтры»).</summary>
 public class TaskFilter
 {
     public string? Text { get; set; }
@@ -15,12 +15,15 @@ public class TaskFilter
     public SortKey Sort { get; set; } = SortKey.Priority;
 }
 
+/// <summary>Применение фильтра к задачам проекта. Чистая функция: ничего не меняет и не выводит.</summary>
 public static class TaskQuery
 {
     public static List<TaskItem> Apply(Project project, TaskFilter filter)
     {
+        // LINQ строит запрос лениво: условия накапливаются, а выполняется он один раз в самом конце (ToList).
         IEnumerable<TaskItem> query = project.Tasks;
 
+        // Текстовый поиск: в названии, описании и имени исполнителя, без учёта регистра.
         if (!string.IsNullOrWhiteSpace(filter.Text))
         {
             var needle = filter.Text.Trim();
@@ -45,13 +48,14 @@ public static class TaskQuery
         IOrderedEnumerable<TaskItem> ordered = filter.Sort switch
         {
             SortKey.Priority => query.OrderByDescending(t => t.Priority),
-            SortKey.Deadline => query.OrderBy(t => t.Deadline ?? DateTime.MaxValue),
+            SortKey.Deadline => query.OrderBy(t => t.Deadline ?? DateTime.MaxValue),   // без срока - в самый конец
             SortKey.State => query.OrderBy(t => t.State),
             SortKey.Title => query.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase),
             SortKey.Time => query.OrderByDescending(t => t.SpentMinutes),
             _ => query.OrderBy(t => t.Id)
         };
 
+        // Вторичная сортировка по ID делает порядок стабильным и предсказуемым при равных значениях.
         return ordered.ThenBy(t => t.Id).ToList();
     }
 }
